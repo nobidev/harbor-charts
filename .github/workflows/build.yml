@@ -1,0 +1,42 @@
+name: Build
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+jobs:
+  build:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/configure-pages@v5
+      - run: |
+          set -euo pipefail
+          tag=$(curl -fsL -H 'Authorization: Bearer ${{ github.token }}' https://api.github.com/repos/${{ github.repository }}/tags | jq -r '.[0].name')
+          echo "Using tag ${tag} ..."
+          VERSION=$(git cat-file -p ${tag}:Chart.yaml | yq -r '.version')
+          APP_VERSION=$(git cat-file -p ${tag}:Chart.yaml | yq -r '.appVersion')
+          echo "Packaging chart version ${VERSION} for application version ${APP_VERSION} ..."
+          yq -i ".version = \"${VERSION}\"" Chart.yaml
+          yq -i ".appVersion = \"${APP_VERSION}\"" Chart.yaml
+          sed -i -E "s/(tag): dev/\1: v${APP_VERSION}/g" values.yaml
+          helm package -d dist/ .
+          helm repo index dist/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v4
