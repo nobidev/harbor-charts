@@ -158,6 +158,11 @@ data:
         location /service/notifications {
           return 404;
         }
+
+        {{- if .Values.nginx.extraConfig }}
+        {{- "\n" }}
+        {{- tpl .Values.nginx.extraConfig . | nindent 8 }}
+        {{- end }}
       }
 
       server {
@@ -168,7 +173,14 @@ data:
         listen [::]:8080;
         {{- end}}
         #server_name harbordomain.com;
-        return 301 https://$host$request_uri;
+        location / {
+          return 301 https://$host$request_uri;
+        }
+
+        {{- if .Values.nginx.extraHttpConfig }}
+        {{- "\n" }}
+        {{- tpl .Values.nginx.extraHttpConfig . | nindent 8 }}
+        {{- end }}
       }
     }
 {{- end }}

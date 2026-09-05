@@ -508,6 +508,8 @@ containerSecurityContext:
 
 # If service exposed via "ingress", the Nginx will not be used
 nginx:
+  extraConfig: ''
+  extraHttpConfig: ''
   image:
     repository: docker.io/goharbor/nginx-photon
     tag: dev
