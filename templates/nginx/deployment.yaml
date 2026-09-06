@@ -6,8 +6,15 @@ metadata:
   namespace: {{ .Release.Namespace | quote }}
   labels:
 {{ include "harbor.labels" . | indent 4 }}
+    {{- with .Values.nginx.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
     component: nginx
     app.kubernetes.io/component: nginx
+  {{- with .Values.nginx.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   replicas: {{ .Values.nginx.replicas }}
   revisionHistoryLimit: {{ .Values.nginx.revisionHistoryLimit }}
